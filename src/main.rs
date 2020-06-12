@@ -30,6 +30,7 @@ pub struct Stage {
     speed_mult: f32,
     debug_drawing: bool,
 }
+
 fn main() {
     miniquad::start(conf::Conf::default(), |mut ctx| {
         miniquad::UserData::owning(Stage::new(&mut ctx), ctx)
