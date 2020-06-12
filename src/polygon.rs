@@ -1,10 +1,9 @@
 use geo::convexhull::ConvexHull;
-use geo::{line_string, polygon};
-use geo::{Coordinate, Line, LineString, Polygon};
-use glam::{vec2, vec3, Mat2, Vec2, Vec3};
+use geo::{LineString, Polygon};
+use glam::{vec2, vec3, Vec2, Vec3};
 use quad_rand as qrand;
 
-const SHADOW_SIZE: f32 = 5f32;
+const SHADOW_SIZE: f32 = 20f32;
 
 /// sample points and find it's convex hull
 pub fn generate_convex_polygon(samples_num: usize, size: f32) -> Polygon<f32> {
@@ -21,22 +20,8 @@ pub fn generate_convex_polygon(samples_num: usize, size: f32) -> Polygon<f32> {
     polygon.convex_hull()
 }
 
-// TODO. Not currently working. debug
-/// Calculates segment to be used for shadow drawing
-pub fn shadow_segment(polygon: &Polygon<f32>, position: Vec2, light: Vec2) -> (Vec2, Vec2) {
-    let exterior: Vec<_> = polygon
-        .exterior()
-        .points_iter()
-        .map(|p| vec2(p.x() - light.x(), p.y() - light.y()))
-        .collect();
-    let (mut p1, mut p2) = shadow_segment_from_origin(exterior, position);
-    p1 += light;
-    p2 += light;
-    (p1, p2)
-}
-
-// TODO replace with shadow segment
-pub fn shadow_segments(polygon: &Polygon<f32>) -> Vec<(Vec2, Vec2)> {
+/// Full graph on vertices of polygon
+pub fn _shadow_segments(polygon: &Polygon<f32>) -> Vec<(Vec2, Vec2)> {
     let ex: Vec<_> = polygon.exterior().points_iter().collect();
     let mut res = vec![];
     for i in 0..ex.len() {
@@ -46,16 +31,13 @@ pub fn shadow_segments(polygon: &Polygon<f32>) -> Vec<(Vec2, Vec2)> {
             }
             let a = ex[i];
             let b = ex[j];
-            res.push((
-                vec2(a.x(), a.y()), 
-                vec2(b.x(), b.y())
-            ));
+            res.push((vec2(a.x(), a.y()), vec2(b.x(), b.y())));
         }
     }
     res
 }
 
-// TODO replace with shadow segment
+// TODO replace with shadow segment O(n^2). Polygons are small for this demo
 pub fn brute_shadow_segment(polygon: &Polygon<f32>, position: Vec2, light: Vec2) -> (Vec2, Vec2) {
     let ex: Vec<_> = polygon.exterior().points_iter().collect();
     let mut res = (vec2(0., 0.), vec2(0., 0.));
@@ -87,41 +69,21 @@ fn polar_angle(vec: Vec2) -> f32 {
     } else {
         p
     }
-    // vec.y().atan2(vec.x())
 }
 
+/// shortest angle between two radius vectors
 fn shortest_angle(a: Vec2, b: Vec2) -> f32 {
     let a = (polar_angle(a) - polar_angle(b)).abs();
-    if a > std::f32::consts::PI  {
+    if a > std::f32::consts::PI {
         2. * std::f32::consts::PI - a
-    } else { 
+    } else {
         a
     }
 }
 
-/// Given that light is in (0, 0) position
-/// calculate the current shadow blocking segment of the polygon
-pub fn shadow_segment_from_origin(points: Vec<Vec2>, position: Vec2) -> (Vec2, Vec2) {
-    let rotation = Mat2::from_angle(polar_angle(points[0] + position));
-    let mut point1 = points[0];
-    let mut angle1 = polar_angle(rotation * (point1 + position));
-    let mut point2 = points[0];
-    let mut angle2 = polar_angle(rotation * (point2 + position));
-    for point in points.iter() {
-        let cur = rotation * (*point + position);
-        let angle = polar_angle(cur);
-        if angle < angle1 {
-            angle1 = angle;
-            point1 = *point;
-        };
-        if angle > angle2 {
-            angle2 = angle;
-            point2 = *point;
-        }
-    }
-    (point1, point2)
-}
-
+/// construct shadow quadrangle from ligh blocking segment and light position
+/// position -- is the position of segment in the world
+/// segment -- model coords
 pub fn shadow_shape(segment: (Vec2, Vec2), light: Vec2, position: Vec2) -> [Vec2; 4] {
     let dir0 = (segment.0 + position - light).normalize();
     let dir1 = (segment.1 + position - light).normalize();
@@ -133,20 +95,20 @@ pub fn shadow_shape(segment: (Vec2, Vec2), light: Vec2, position: Vec2) -> [Vec2
     ]
 }
 
-/// multiply uv on homogeneous coordinate
+/// multiply uv on homogeneous coordinate to achive smooth texture interpolation
 /// http://reedbeta.com/blog/quadrilateral-interpolation-part-1/
 pub fn projective_textures(shape: &[Vec2; 4], uv: &[Vec2; 4]) -> [Vec3; 4] {
     let diagonal1 = MyLine::from_segment(shape[0], shape[2]);
     let diagonal2 = MyLine::from_segment(shape[1], shape[3]);
     // TODO handle error properly
-    let center = intersect(diagonal1, diagonal2).unwrap_or(vec2(0., 0.)); // TODO
+    let center = intersect(diagonal1, diagonal2).unwrap_or_else(|| vec2(0., 0.));
     let mut distances = vec![];
     for point in shape {
         distances.push((center - *point).length());
     }
     let mut uvq = [Default::default(); 4];
     for i in 0..4 {
-        let adj = (i + 1) % 3;
+        let adj = (i + 2) % 3;
         // TODO devision zero check
         let homogeneous = (distances[i] + distances[adj]) / distances[adj];
         uvq[i] = vec3(
@@ -160,8 +122,8 @@ pub fn projective_textures(shape: &[Vec2; 4], uv: &[Vec2; 4]) -> [Vec3; 4] {
 
 // ---------------------------------------------------
 
-// no intersections in geo.
-// Other deps are too heavy -- just write intersections of line manually
+// No intersection point in geo for lines.
+// Other deps are too heavy(while miniquad compiles in 5 sec) -- just write lines intersection manually
 
 const EPS: f32 = 1E-9;
 

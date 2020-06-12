@@ -1,6 +1,7 @@
 use glam::{vec2, vec3, vec4, Mat4, Vec2};
 pub const MAX_ZOOM: f32 = 0.8;
-pub const MIN_ZOOM: f32 = 0.2;
+pub const MIN_ZOOM: f32 = 0.05;
+pub const INIT_ZOOM: f32 = 0.2;
 
 pub struct Camera {
     pub position2d: Vec2,
@@ -9,11 +10,12 @@ pub struct Camera {
     window_height: f32,
 }
 
+#[allow(dead_code)]
 impl Camera {
     pub fn new(window_width: f32, window_height: f32) -> Self {
         Camera {
             position2d: vec2(0., 0.),
-            zoom: MIN_ZOOM,
+            zoom: INIT_ZOOM,
             window_width,
             window_height,
         }
