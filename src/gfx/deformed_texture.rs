@@ -20,7 +20,6 @@ pub struct TextureRenderer {
 }
 
 impl TextureRenderer {
-
     /// Update rendering pipeline with new shadows
     pub fn deform_texture(&mut self, ctx: &mut Context) {
         self.vertices.clear();
@@ -44,7 +43,8 @@ impl TextureRenderer {
     }
 
     pub fn new(ctx: &mut Context) -> TextureRenderer {
-        let display_vertex_buffer = Buffer::stream(ctx, BufferType::VertexBuffer, MAX_TEXTURE_VERTICES_BYTES);
+        let display_vertex_buffer =
+            Buffer::stream(ctx, BufferType::VertexBuffer, MAX_TEXTURE_VERTICES_BYTES);
 
         let tiger = include_bytes!("../../vintage-robot.png");
         let decoder = png::Decoder::new(&tiger[..]);
@@ -87,7 +87,7 @@ impl TextureRenderer {
             display_bindings,
             vertices: vec![],
             vertex_buffer: display_vertex_buffer,
-            time: 0.
+            time: 0.,
         }
     }
 

@@ -142,8 +142,10 @@ impl ShadowRenderer {
         // Projective textures trick is not used for light (at least that way) in real life, but its good enough for this demo.
         let (offscreen_pipeline, offscreen_bindings, vertex_buffer, index_buffer, offscreen_pass) = {
             let offscreen_pass = RenderPass::new(ctx, color_img, depth_img);
-            let vertex_buffer = Buffer::stream(ctx, BufferType::VertexBuffer, MAX_SHADOW_VERTICES_BYTES);
-            let index_buffer = Buffer::stream(ctx, BufferType::IndexBuffer, MAX_SHADOW_INDICES_BYTES);
+            let vertex_buffer =
+                Buffer::stream(ctx, BufferType::VertexBuffer, MAX_SHADOW_VERTICES_BYTES);
+            let index_buffer =
+                Buffer::stream(ctx, BufferType::IndexBuffer, MAX_SHADOW_INDICES_BYTES);
 
             let offscreen_bindings = Bindings {
                 vertex_buffers: vec![vertex_buffer],

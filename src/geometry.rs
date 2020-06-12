@@ -127,7 +127,7 @@ pub fn projective_textures(shape: &[Vec2; 4], uv: &[Vec2; 4]) -> [Vec3; 4] {
         let mut res = [vec3(0., 0., 1.); 4];
         for (i, v) in uv.iter().enumerate() {
             res[i] = vec3(v.x(), v.y(), 1.);
-        };
+        }
         res
     }
 }
@@ -173,4 +173,48 @@ pub fn intersect(line1: MyLine, line2: MyLine) -> Option<Vec2> {
         -det(line1.a, line1.c, line2.a, line2.c) / divisor,
     );
     Some(res)
+}
+
+#[test]
+fn check_convex() {
+    assert!(generate_convex_polygon(10, 1.).is_convex());
+}
+
+#[test]
+fn projective_textures_identity() {
+    let shape = [vec2(0., 0.), vec2(0., 1.), vec2(1., 1.), vec2(1., 0.)];
+    let uv = [vec2(0., 0.), vec2(0., 1.), vec2(1., 1.), vec2(1., 0.)];
+    let new_uvs = projective_textures(&shape, &uv);
+    let mut shader_pass = [vec2(0., 0.); 4];
+    for i in 0..4 {
+        let tex = new_uvs[i];
+        shader_pass[i] = vec2(tex.x() / tex.z(), tex.y() / tex.z());
+    }
+    assert_eq!(shader_pass, uv);
+}
+
+#[test]
+fn angle90() {
+    assert!((polar_angle(vec2(0., 1.)) - std::f32::consts::PI / 2.).abs() < EPS)
+}
+
+#[test]
+fn lines_intersection() {
+    let horizontal = MyLine::from_segment(vec2(0., 0.), vec2(1., 0.));
+    let vertical = MyLine::from_segment(vec2(0., 0.), vec2(0., 1.));
+    assert_eq!(Some(vec2(0., 0.)), intersect(horizontal, vertical));
+}
+
+#[test]
+fn lines_equal() {
+    let horizontal1 = MyLine::from_segment(vec2(0., 0.), vec2(1., 0.));
+    let horizontal2 = MyLine::from_segment(vec2(0., 0.), vec2(1., 0.));
+    assert_eq!(None, intersect(horizontal1, horizontal2));
+}
+
+#[test]
+fn lines_parallel() {
+    let horizontal1 = MyLine::from_segment(vec2(0., 0.), vec2(1., 0.));
+    let horizontal2 = MyLine::from_segment(vec2(0., 1.), vec2(1., 1.));
+    assert_eq!(None, intersect(horizontal1, horizontal2));
 }

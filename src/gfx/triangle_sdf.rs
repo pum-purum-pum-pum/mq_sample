@@ -47,9 +47,7 @@ impl TriangleSDF {
         let display_pipeline = Pipeline::with_params(
             ctx,
             &[BufferLayout::default()],
-            &[
-                VertexAttribute::new("pos", VertexFormat::Float2),
-            ],
+            &[VertexAttribute::new("pos", VertexFormat::Float2)],
             default_shader,
             PipelineParams {
                 depth_write: false,
@@ -60,14 +58,17 @@ impl TriangleSDF {
         TriangleSDF {
             display_pipeline,
             display_bindings,
-            sdf_edge: 0.01
+            sdf_edge: 0.01,
         }
     }
 
     pub fn draw(&mut self, ctx: &mut Context, projection: Mat4) {
         ctx.apply_pipeline(&self.display_pipeline);
         ctx.apply_bindings(&self.display_bindings);
-        ctx.apply_uniforms(&display_shader::Uniforms { projection, sdf_edge: self.sdf_edge });
+        ctx.apply_uniforms(&display_shader::Uniforms {
+            projection,
+            sdf_edge: self.sdf_edge,
+        });
         ctx.draw(0, 6, 1);
         ctx.end_render_pass();
     }
@@ -86,7 +87,6 @@ mod display_shader {
         gl_Position = projection * (vec4(pos, 0, 1) + vec4(1., -1., 0., 0.));
         fpos = pos;
     }"#;
-
 
     // https://www.shadertoy.com/view/Xl2yDW
     pub const FRAGMENT: &str = r#"#version 100
@@ -124,8 +124,8 @@ mod display_shader {
         images: &[],
         uniforms: UniformBlockLayout {
             uniforms: &[
-                UniformDesc::new("projection", UniformType::Mat4), 
-                UniformDesc::new("sdf_edge", UniformType::Float1)
+                UniformDesc::new("projection", UniformType::Mat4),
+                UniformDesc::new("sdf_edge", UniformType::Float1),
             ],
         },
     };

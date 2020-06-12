@@ -56,7 +56,7 @@ impl Camera {
         )
     }
 
-    /// Get world coordinates from (x, y) \in [0, 1] x [0, 1] screen coordinates. 
+    /// Get world coordinates from (x, y) \in [0, 1] x [0, 1] screen coordinates.
     pub fn unproject(&self, point: Vec2) -> Vec2 {
         let (x, y) = (point.x(), point.y());
         let (width, height) = (self.window_width, self.window_height);
