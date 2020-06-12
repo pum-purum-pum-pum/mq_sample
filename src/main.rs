@@ -32,7 +32,7 @@ pub struct Stage {
 }
 
 fn main() {
-    miniquad::start(conf::Conf::default(), |mut ctx| {
+    miniquad::start(conf::Conf{sample_count: 4, ..Default::default()}, |mut ctx| {
         miniquad::UserData::owning(Stage::new(&mut ctx), ctx)
     });
 }
