@@ -1,42 +1,20 @@
-use geo::Polygon;
 use glam::{vec2, Vec2};
 use miniquad::*;
 use quad_gl::*;
+use geo::Polygon;
 use quad_rand as qrand;
 
 use camera::Camera;
 use drawing::{draw_window, DrawContext};
-use gfx::deformed_texture::TextureRenderer;
-use gfx::shadow::ShadowRenderer;
-use gfx::triangle_sdf::TriangleSDF;
+use gfx::{shadow::ShadowRenderer, triangle_sdf::TriangleSDF, deformed_texture::TextureRenderer};
 use megaui::{hash, InputHandler};
-use polygon::{brute_shadow_segment, generate_convex_polygon, shadow_shape};
+use geometry::{brute_shadow_segment, generate_convex_polygon, shadow_shape};
 
 mod camera;
 mod gfx;
-mod polygon;
+mod geometry;
 
 const POLYS_N: usize = 4;
-
-fn draw_polygon(gl: &mut QuadGl, poly: &Polygon<f32>, pos: Vec2) {
-    gl.draw_mode(DrawMode::Triangles);
-    let exterior: Vec<_> = poly
-        .exterior()
-        .points_iter()
-        .map(|p| {
-            Vertex::new(
-                p.x() + pos.x(),
-                p.y() + pos.y(),
-                0.,
-                0.,
-                0.,
-                Color([50, 50, 50, 255]),
-            )
-        })
-        .collect();
-    let indices = gen_triangulation_indices(exterior.len() as u16);
-    gl.geometry(&exterior, &indices);
-}
 
 pub struct Stage {
     gl: QuadGl,
@@ -93,7 +71,8 @@ impl Stage {
         }
     }
 
-    fn update_gui(&mut self) {
+    /// Draw imgui and update parameters
+    fn gui(&mut self) {
         // udpate params from gui
         let mut speed = self.speed_mult;
         let mut th = self.shadow_renderer.shadow_smooth_th;
@@ -105,7 +84,7 @@ impl Stage {
             &mut self.drawing.ui,
             hash!(),
             vec2(0.5, 0.5),
-            vec2(200., 200.),
+            vec2(250., 250.),
             None,
             |ui| {
                 ui.label(None, "Controls");
@@ -175,7 +154,7 @@ impl EventHandler for Stage {
     }
 
     fn draw(&mut self, ctx: &mut Context) {
-        self.update_gui();
+        self.gui();
         ctx.begin_default_pass(PassAction::clear_color(0., 0., 0., 1.));
         self.gl.set_projection_matrix(self.camera.get_projection());
         self.shadow_renderer.clear_shadows_buffer();
@@ -184,28 +163,8 @@ impl EventHandler for Stage {
             let segment = brute_shadow_segment(&poly, *pos, self.mouse_pos);
             let shadow_points = shadow_shape(segment, self.mouse_pos, *pos);
             self.shadow_renderer.push_shadow(shadow_points);
-
             if self.debug_drawing {
-                // draw shadows mesh
-                self.gl.draw_mode(DrawMode::Lines);
-                let geom: Vec<_> = shadow_points
-                    .iter()
-                    .map(|p| Vertex::new(p.x(), p.y(), 0., 0., 0., BLUE))
-                    .collect();
-                self.gl
-                    .geometry(&geom, &gen_line_indices(shadow_points.len() as u16));
-                // draw triangle under mouse
-                self.gl.draw_mode(DrawMode::Triangles);
-                let pointer_size = 0.1;
-                let (mx, my) = (self.mouse_pos.x(), self.mouse_pos.y());
-                self.gl.geometry(
-                    &[
-                        Vertex::new(mx, my - pointer_size, 0., 0., 0., BLUE),
-                        Vertex::new(mx + pointer_size, my + pointer_size, 0., 0., 0., RED),
-                        Vertex::new(mx - pointer_size, my + pointer_size, 0., 0., 0., GREEN),
-                    ],
-                    &[0, 1, 2],
-                );
+                debug_drawing(&mut self.gl, self.mouse_pos, shadow_points);
             }
         }
         ctx.end_render_pass();
@@ -226,6 +185,51 @@ impl EventHandler for Stage {
         self.drawing.perform_render_passes(ctx);
         ctx.commit_frame();
     }
+}
+
+
+/// draw shadows mesh
+fn debug_drawing(gl: &mut QuadGl, mouse_pos: Vec2, shadow_points: [Vec2; 4]) {
+    gl.draw_mode(DrawMode::Lines);
+    let geom: Vec<_> = shadow_points
+        .iter()
+        .map(|p| Vertex::new(p.x(), p.y(), 0., 0., 0., BLUE))
+        .collect();
+    gl
+        .geometry(&geom, &gen_line_indices(shadow_points.len() as u16));
+    // draw triangle under mouse
+    gl.draw_mode(DrawMode::Triangles);
+    let pointer_size = 0.1;
+    let (mx, my) = (mouse_pos.x(), mouse_pos.y());
+    gl.geometry(
+        &[
+            Vertex::new(mx, my - pointer_size, 0., 0., 0., BLUE),
+            Vertex::new(mx + pointer_size, my + pointer_size, 0., 0., 0., RED),
+            Vertex::new(mx - pointer_size, my + pointer_size, 0., 0., 0., GREEN),
+        ],
+        &[0, 1, 2],
+    );
+}
+
+/// Draw inner size of polygon
+fn draw_polygon(gl: &mut QuadGl, poly: &Polygon<f32>, pos: Vec2) {
+    gl.draw_mode(DrawMode::Triangles);
+    let exterior: Vec<_> = poly
+        .exterior()
+        .points_iter()
+        .map(|p| {
+            Vertex::new(
+                p.x() + pos.x(),
+                p.y() + pos.y(),
+                0.,
+                0.,
+                0.,
+                Color([50, 50, 50, 255]),
+            )
+        })
+        .collect();
+    let indices = gen_triangulation_indices(exterior.len() as u16);
+    gl.geometry(&exterior, &indices);
 }
 
 /// Exterior's indices of polygon vertices

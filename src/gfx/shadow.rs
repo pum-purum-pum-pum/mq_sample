@@ -1,11 +1,11 @@
-use crate::polygon::projective_textures;
+use crate::geometry::projective_textures;
 use glam::{vec2, Mat4, Vec2, Vec3};
 use miniquad::*;
 
 /// Max number of shadow vertices (#shadows = MAX_SHADOW_VERTICES / 4)
-const MAX_SHADOW_VERTICES: usize = 1000;
+const MAX_SHADOW_VERTICES_BYTES: usize = 1000;
 /// Max number of shadow indices (#shadows = MAX_SHADOW_INDICES / 6)
-const MAX_SHADOW_INDICES: usize = 1500;
+const MAX_SHADOW_INDICES_BYTES: usize = 1500;
 
 const TEXTURE_SIZE: u32 = 1024;
 
@@ -138,12 +138,12 @@ impl ShadowRenderer {
             offscreen_light_shader,
         );
         // shadows
-        // note that glitch when changing shadow segment
-        // (projective textures trick is not used for light in real life, but its good enough for this demo)
+        // Note that glitch when changing shadow segment
+        // Projective textures trick is not used for light (at least that way) in real life, but its good enough for this demo.
         let (offscreen_pipeline, offscreen_bindings, vertex_buffer, index_buffer, offscreen_pass) = {
             let offscreen_pass = RenderPass::new(ctx, color_img, depth_img);
-            let vertex_buffer = Buffer::stream(ctx, BufferType::VertexBuffer, MAX_SHADOW_VERTICES);
-            let index_buffer = Buffer::stream(ctx, BufferType::IndexBuffer, MAX_SHADOW_INDICES);
+            let vertex_buffer = Buffer::stream(ctx, BufferType::VertexBuffer, MAX_SHADOW_VERTICES_BYTES);
+            let index_buffer = Buffer::stream(ctx, BufferType::IndexBuffer, MAX_SHADOW_INDICES_BYTES);
 
             let offscreen_bindings = Bindings {
                 vertex_buffers: vec![vertex_buffer],
@@ -188,7 +188,6 @@ impl ShadowRenderer {
         ];
         let display_vertex_buffer = Buffer::immutable(ctx, BufferType::VertexBuffer, &vertices);
 
-        #[rustfmt::skip]
         let indices: &[u16] = &[0, 1, 2, 3, 2, 0];
         let display_index_buffer = Buffer::immutable(ctx, BufferType::IndexBuffer, &indices);
         let display_bindings = Bindings {

@@ -9,12 +9,13 @@ struct Vertex {
 pub struct TriangleSDF {
     display_pipeline: Pipeline,
     display_bindings: Bindings,
+    /// Threshold for smoothstep in fragment shader
     pub sdf_edge: f32,
 }
 
 impl TriangleSDF {
     pub fn new(ctx: &mut Context) -> TriangleSDF {
-        // display pipeline
+        // Render huge recrangle, fragment shader do the rest
         let size = 5.;
         let vpos = [
             vec2(-size, -size),
@@ -86,6 +87,8 @@ mod display_shader {
         fpos = pos;
     }"#;
 
+
+    // https://www.shadertoy.com/view/Xl2yDW
     pub const FRAGMENT: &str = r#"#version 100
     varying highp vec2 fpos;
     uniform lowp float sdf_edge;

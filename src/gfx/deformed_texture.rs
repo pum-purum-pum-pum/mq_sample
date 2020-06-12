@@ -1,9 +1,9 @@
-use crate::polygon::projective_textures;
+use crate::geometry::projective_textures;
 use glam::{vec2, Mat4, Vec2, Vec3};
 use miniquad::*;
 use png;
 
-const MAX_TEXTURE_VERTICES: usize = 1000;
+const MAX_TEXTURE_VERTICES_BYTES: usize = 1000;
 
 #[repr(C)]
 struct TexVertex {
@@ -23,7 +23,6 @@ impl TextureRenderer {
 
     /// Update rendering pipeline with new shadows
     pub fn deform_texture(&mut self, ctx: &mut Context) {
-        // self.time = (self.time + 0.01) % (2. * std::f32::consts::PI);
         self.vertices.clear();
         let size = 1.;
         self.vertices.shrink_to_fit();
@@ -45,22 +44,7 @@ impl TextureRenderer {
     }
 
     pub fn new(ctx: &mut Context) -> TextureRenderer {
-        // display pipeline
-        let size = 1.;
-        let vpos = [
-            vec2(-size, -size),
-            vec2(size, -size),
-            vec2(size, 2. * size),
-            vec2(-1.5 * size, size),
-        ];
-        let uv = [vec2(1., 1.), vec2(0., 1.), vec2(0., 0.), vec2(1., 0.)];
-        let uv = projective_textures(&vpos, &uv);
-        let mut vertices = vec![];
-        for (v, tex) in vpos.iter().zip(uv.iter()) {
-            vertices.push(TexVertex { pos: *v, uv: *tex });
-        }
-        // let display_vertex_buffer = Buffer::immutable(ctx, BufferType::VertexBuffer, &vertices);
-        let display_vertex_buffer = Buffer::stream(ctx, BufferType::VertexBuffer, MAX_TEXTURE_VERTICES);
+        let display_vertex_buffer = Buffer::stream(ctx, BufferType::VertexBuffer, MAX_TEXTURE_VERTICES_BYTES);
 
         let tiger = include_bytes!("../../vintage-robot.png");
         let decoder = png::Decoder::new(&tiger[..]);

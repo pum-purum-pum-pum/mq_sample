@@ -3,6 +3,7 @@ pub const MAX_ZOOM: f32 = 0.8;
 pub const MIN_ZOOM: f32 = 0.05;
 pub const INIT_ZOOM: f32 = 0.2;
 
+/// Simple orthographic camera
 pub struct Camera {
     pub position2d: Vec2,
     pub zoom: f32,
@@ -44,7 +45,7 @@ impl Camera {
         proj * view
     }
 
-    /// use only if it's needed once, cause it creates project matrix inside
+    /// Project into [0, 1] x [0, 1] space. NOTE It creates projection matrix inside
     pub fn project(&self, point: Vec2) -> Vec2 {
         let (width, height) = (self.window_width, self.window_height);
         let mvp = self.get_projection();
@@ -55,7 +56,7 @@ impl Camera {
         )
     }
 
-    /// x, y -- screen coordinates in pixels
+    /// Get world coordinates from (x, y) \in [0, 1] x [0, 1] screen coordinates. 
     pub fn unproject(&self, point: Vec2) -> Vec2 {
         let (x, y) = (point.x(), point.y());
         let (width, height) = (self.window_width, self.window_height);
@@ -67,6 +68,7 @@ impl Camera {
         vec2(unproject_pos.x(), unproject_pos.y())
     }
 
+    /// Udpate zoom from wheel y diff
     pub fn update_from_wheel(&mut self, value: f32) {
         self.zoom *= f32::powf(1.2, value);
         self.zoom = self.zoom.min(MAX_ZOOM).max(MIN_ZOOM);
