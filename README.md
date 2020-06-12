@@ -1,5 +1,7 @@
 # Miniquad sample
 
+[Demo](https://pum-purum-pum-pum.github.io/mq_sample/)
+
 It uses miniquad and some ancient opengl shaders.
 
 This sample consists of:
