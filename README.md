@@ -11,3 +11,4 @@ This sample consists of:
 Known issues and possible enhancements:
 * raycasting inside the polygon
 * shadow glitch when blocking segment changes -- shadows in this demo are not fair shadows :)
+* aliased polygons
