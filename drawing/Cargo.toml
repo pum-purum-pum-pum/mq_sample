@@ -1,0 +1,18 @@
+[package]
+name = "drawing"
+version = "0.1.0"
+authors = ["pum-purum <vladzhukovtirko@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+miniquad = "0.3.0-alpha.9"
+megaui = "0.2"
+quad-gl = "0.2.1"
+quad-rand = "0.1.1"
+
+# we don't want SIMD for our vecs, so we can safely use vecs for our gpu buffers
+glam = {version = "0.8", features = ["scalar-math", "packed-vec3"] } 
+geo = "0.13.0"
+png = "0.15.3"
